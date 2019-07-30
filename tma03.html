@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>My Erehwon Journal ks23888</title>
+    <meta name="author" content="Stephen Rice">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- For simplicity of demonstration, all required CSS is provided here -->
+    <style>
+
+      main {
+        /* Apply style rules to the diary container here? */
+         border-style: solid;
+         border-color: rgba(220,220,220,0.8);
+          padding: 5px;
+          margin: auto;
+          min-height: 100%;
+          min-width: 250px;
+          max-width: 600px;
+          column-count: 1;
+      }
+      
+      section {
+        /* To make sizing easier, include borders or padding in width */
+        box-sizing: border-box;
+        border-style: solid;
+        margin-top: 2px;
+        padding: 1px;
+        /* Set a limit on entry widths? */
+        max-width: 100%;
+        min-width: 50%;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      section.entry {
+        background-color: #fffce2;
+        /* This allows us to position each delete button */
+        position: relative;
+        /* Set a limit on entry height */
+        min-height: 5rem;
+
+      }
+
+      /* Style every second entry differently */
+      section.entry:nth-child(2n) {
+        background-color: #c1cedb;
+      }
+
+      /* Style every fourth entry differently */
+      section.entry:nth-child(4n) {
+        background-color: #faa;
+      }
+
+      section.entry button {
+        /* Fix size of delete buttons */
+        height: 1.5rem;
+        width: 1.5rem;
+        /* Position delete buttons to the top-right of their container */
+        position: absolute;
+        top: 0;
+        right: 0;
+        /* Fade out delete buttons when not using them */
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      section.entry button:hover,
+      section.entry button:focus {
+        /* Fade in delete buttons when you hover over or focus on them (e.g. tab with keyboard) */
+        opacity: 1;
+      }
+
+      section.entry textarea {
+        /* Use a variable-width font */
+        font-family: sans-serif;
+        /* Make text areas fill their container */
+        background-color: transparent;
+        border: 0;
+        width: 100%;
+        height: 100%;
+        resize: none;
+        /* To make sizing easier, include borders or padding in width */
+        box-sizing: border-box;
+        /* Allow scrolling using keyboard only */
+        overflow: hidden;
+      }
+
+      /* Make image entries responsive */
+      section.entry img {
+        width: 100%;
+        height: auto;
+      }
+
+      @media screen and (pointer: coarse) {
+
+        /* Do not fade delete button on touch screen (no hover) */
+        section.entry button {
+          opacity: 1;
+        }
+
+        section.entry textarea {
+          /* Stop text area going behind delete button if not faded */
+          padding-right: 1.5rem;
+          /* Allow scrolling with finger */
+          overflow: scroll;
+        }
+
+      }
+
+      section.button button {
+        /* Make Add photo and Add entry buttons fill their container */
+        width: 100%;
+        height: 100%;
+        /* Do not add border to width (else it will be over 100%) */
+        box-sizing: border-box;
+      }
+
+      /* Hide the image file input (use JavaScript to click it instead) */
+      section.button input[type="file"] {
+        display: none;
+      }
+
+      /* Style page heading */
+      h1 {
+        font-size: 1.4rem;
+        /* Smaller margins to make things a bit neater */
+        margin: 0.25rem 0;
+      }
+      @media only screen and (min-width: 640px){
+         main{
+          padding: 1px;
+          margin: auto;
+          min-width: 250px;
+          max-width: 1200px;
+          column-count: 2;
+      }
+         }
+         @media only screen and (min-width: 1200px){
+         main{
+          margin: auto;
+          min-width: 250px;
+          max-width: 95%;
+          column-count: 3;
+      		}
+      	}
+    </style>
+  </head>
+  <body>
+
+    <!-- For simplicity of demonstration, all required JavaScript is provided here -->
+    <script>
+      var number = 1;
+      // Make diary data item
+      function makeItem(type, data) {
+
+        var itemObject = {type: type, data: data};
+        return JSON.stringify(itemObject);
+
+      }
+
+      // Create and store demonstration data
+      function createDemoItems() {
+
+        var item;
+
+      }
+
+      // Add a section to the diary containing the given element
+      function addSection(key, element) {
+
+        // Create a section element to contain the new entry
+        var sectionElement = document.createElement("SECTION");
+
+        // Give the section a class to allow styling
+        sectionElement.classList.add("entry");
+
+        // Add the element to the section
+        sectionElement.appendChild(element);
+
+        // Add a button to delete the entry
+        var deleteButton = document.createElement("BUTTON");
+        deleteButton.innerHTML = "&times;";
+        deleteButton.setAttribute("aria-label", "Delete entry");
+
+        // Add a click event listener to delete the entry
+        deleteButton.addEventListener("click", function(event) {
+
+          // Remove the section from its parent
+          sectionElement.parentNode.removeChild(sectionElement);
+
+          // TODO: Q1(c)(ii)
+          // Remove the item from local storage by key
+          localStorage.removeItem(key);
+          console.log("Item with key ", key," removed");
+
+        });
+
+        // Add the delete button to the section
+        sectionElement.appendChild(deleteButton);
+
+        // Get a reference to the element containing the diary entries
+        var diaryElement = document.querySelector("main");
+
+        // Get a reference to the first button section (Add entry/photo) in the diary element
+        var buttonElement = diaryElement.querySelector("section.button");
+
+        // Add the section to the diary after existing entries,
+        // but before the buttons
+        diaryElement.insertBefore(sectionElement, buttonElement);
+
+      }
+
+      function addTextEntry(key, text, isNewEntry) {
+
+        // Create a textarea element to edit the entry
+        var textareaElement = document.createElement("TEXTAREA");
+        textareaElement.rows = 5;
+        textareaElement.placeholder = "(new entry)";
+
+        // Set the text within the textarea
+        textareaElement.innerText = text;
+
+        // Add a section to the diary containing the textarea
+        addSection(key, textareaElement);
+
+        // If this is a new entry (added by the user clicking a button)
+        // move the focus to the text area to encourage typing
+        if (isNewEntry) {
+          textareaElement.focus();
+        }
+
+        // TODO: Q1(c)(iii)
+        // TODO: Add an event listener to textareaElement to save the text when it changes
+          // TODO: Within the listener function...
+          // TODO: ...make an item using the text area value
+          // TODO: ...store the item in local storage using the given key
+
+        textareaElement.addEventListener("input", function(event) {
+          var item; 
+          item = makeItem("text", textareaElement.value);
+          localStorage.setItem(key, item);
+        });
+        
+
+      }
+
+      function addImageEntry(key, url) {
+
+        // Create a image element
+        var imgElement = new Image();
+        imgElement.alt = "Photo entry";
+
+        // Load the image
+        imgElement.src = url;
+
+        // Add a section to the diary containing the image
+        addSection(key, imgElement);
+
+        // TODO: Q1(c)(iv) Task 3 of 3
+        // TODO: Make an image entry using the url
+        // TODO: Store the item in local storage using the given key
+          var myJson = JSON.stringify(imgElement.src);
+          var stringJson = JSON.parse(myJson);
+          var imageItem = makeItem("image", stringJson);
+          localStorage.setItem(key, imageItem);
+      }
+
+      // Make a function to show what is in local storage
+      function showEntries() {
+
+        // Build a sorted list of keys for diary entries
+        var diaryKeys = [];
+
+        // Loop through each key in storage by index
+        for (var index = 0; index < localStorage.length; index++) {
+
+          var key = localStorage.key(index);
+
+          // If the key begins with "diary", assume it is for a diary entry
+          // There may be other data in local storage, so we will ignore that
+          if (key.slice(0, 5) == "diary") {
+
+            // Append this key to the list of known diary keys
+            diaryKeys.push(key);
+
+          }
+
+        }
+
+        // Although the Developer Tools shows entries in key order,
+        // their actual order is browser-dependent, so sort the keys,
+        // so that our diary entries are shown in the right order!
+        diaryKeys.sort();
+
+        // Loop through each diary item in storage by key
+        for (var index = 0; index < diaryKeys.length; index++) {
+
+          var key = diaryKeys[index];
+
+          // Assume the entry is a JSON string and decode it
+          var entry = JSON.parse(localStorage.getItem(key));
+
+          if (entry.type == "text") {
+
+            // Assume the data attribute is a text entry
+            addTextEntry(key, entry.data);
+
+          } else if (entry.type == "image") {
+
+            // Assume the data attribute is an image URL
+            addImageEntry(key, entry.data);
+
+          } else {
+
+            // We do not know what this is so give up!
+            console.error("Unexpected entry type: " + entry.type);
+
+          }
+
+        }
+
+      }
+
+      // Set things up when the page loads
+      window.addEventListener("load", function() {
+
+        // A rough check for local storage support
+        if (!window.localStorage) {
+
+          // This may not work though, see e.g.
+          // https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API#Testing_for_availability
+
+          // This could be more elegant too!
+          document.querySelector("main").outerHTML = "<h1>Error: localStorage not supported!</h1>";
+
+          // Stop the demo
+          return;
+
+        }
+
+        // Connect the Add entry button
+        document.querySelector("#text button").addEventListener("click", function(event) {
+
+          // Add an empty text entry, using the current timestamp to make a key
+          addTextEntry("diary" + Date.now(), "", true);
+
+        });
+
+        // Connect the Add photo button to click the hidden file input
+        document.querySelector("#image button").addEventListener("click", function(event) {
+
+          // Add a new image entry, using the current timestamp to make a key
+          //addImageEntry("diary" + Date.now(), newURL);
+
+          // TODO: Q1(c)(iv) Task 1 of 3
+          // Instead of adding a dummy image:
+          // ...call the click event of the hidden input element
+          // You can do this by obtaining a reference to the element, then calling its .click() method
+         var mainForm = document.querySelector("#image input").click();
+
+
+        });
+
+
+        // TODO: Q1(c)(iv) Task 2 of 3
+        // TODO: Connect the the hidden file input element to addImageEntry
+        // TODO: Using FileReader has been demonstrated in Block 3, except:
+        // ...rather than use the data URL as src for an Image element,
+        // ...use it to add a new image entry to the page
+        document.querySelector("#image input").addEventListener("change", function(event) {
+
+          // Get the first selected file from the files array
+          // (if this is a multiple file input there will be more items in this array)
+          var fileObject = event.target.files[0];
+
+          // Double-check it is actually an image
+          if (!fileObject.type.startsWith('image/')) {
+            return;
+          }
+
+          // Make a FileReader to read the file
+          var reader = new FileReader();
+
+          // Attach a listener that will update our image element when
+          // the data URL is available
+          reader.addEventListener("load", function(event) {
+
+            // Get the data URL from the load event target
+            // and assign it to our image element
+           var mySource = document.querySelector("#image input").src = event.target.result;
+           addImageEntry("diary" + Date.now(), mySource);
+
+          });
+
+          reader.readAsDataURL(fileObject);
+
+        });
+
+        // Create some demonstration items
+        createDemoItems();
+
+        // Update the page to reflect saved items
+        showEntries();
+
+      });
+
+    </script>
+
+    <h1>My Erehwon Journal ks23888</h1>
+
+    <main>
+      <section id="text" class="button"><h2>
+        <button>Add entry</button>
+      </h2></section>
+      <section id="image" class="button"><h3>
+        <button>Add photo</button>
+       </h3><input type="file" accept="image/*">
+      </section>
+    </main>
+
+  </body>
+</html>
